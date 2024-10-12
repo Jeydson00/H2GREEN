@@ -1,0 +1,891 @@
+<html><head><base href="https://enhancedhydrogenplatform.com/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ENEVA Hydrogen Production Platform</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+  :root {
+    --primary-color: #0056b3;
+    --secondary-color: #4CAF50;
+    --bg-color: #f8f9fa;
+    --text-color: #333;
+    --card-bg: #ffffff;
+    --sidebar-bg: #e9ecef;
+    --input-bg: #f1f3f5;
+    --button-hover: #004494;
+    --color1: #746d5c;
+    --color2: #d4ded8;
+    --color3: #149aa4;
+    --color4: #e67f34;
+    --color5: #fccf5d;
+  }
+  body {
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--bg-color);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    transition: background-color 0.3s ease;
+  }
+  .main-container {
+    display: flex;
+    width: 950px;
+    height: 600px;
+    background-color: var(--card-bg);
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  }
+  .sidebar {
+    width: 250px;
+    background-color: var(--sidebar-bg);
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .sidebar img {
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 20px;
+  }
+  .sidebar h2 {
+    font-size: 18px;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+  }
+  .sidebar p {
+    font-size: 14px;
+    color: var(--text-color);
+    line-height: 1.6;
+  }
+  .container {
+    width: 450px;
+    display: none;
+    padding: 20px;
+    overflow-y: auto;
+  }
+  .container.active {
+    display: block;
+  }
+  h1 {
+    color: var(--primary-color);
+    margin-bottom: 30px;
+    font-size: 28px;
+  }
+  .input-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .input-wrapper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  .input-wrapper label {
+    width: 40%;
+    text-align: right;
+    padding-right: 10px;
+    font-size: 14px;
+  }
+  .input-wrapper input,
+  .input-wrapper select {
+    width: 60%;
+    padding: 8px;
+    margin: 0;
+    font-size: 14px;
+  }
+  .button-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+  }
+  button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+  }
+  button:hover {
+    transform: translateY(-2px);
+  }
+  .btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+  }
+  .btn-primary:hover {
+    background-color: var(--button-hover);
+  }
+  .btn-secondary {
+    background-color: var(--secondary-color);
+    color: white;
+  }
+  .btn-secondary:hover {
+    background-color: #45a049;
+  }
+  .btn-danger {
+    background-color: #dc3545;
+    color: white;
+  }
+  .btn-danger:hover {
+    background-color: #c82333;
+  }
+  .home-buttons button {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  .home-icon {
+    position: absolute;
+    top: 20px;
+    left: 290px;
+    background-color: transparent;
+    color: var(--primary-color);
+    font-size: 24px;
+    padding: 5px;
+    cursor: pointer;
+  }
+  .language-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+  }
+  .language-toggle label {
+    margin-right: 10px;
+    color: var(--text-color);
+  }
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+  }
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+  }
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+  }
+  input:checked + .slider {
+    background-color: var(--primary-color);
+  }
+  input:checked + .slider:before {
+    transform: translateX(26px);
+  }
+  .error-message {
+    color: #dc3545;
+    font-size: 14px;
+    margin-top: 5px;
+    display: none;
+  }
+  .password-container {
+    display: flex;
+    align-items: center;
+    width: 60%;
+  }
+  .password-container input[type="password"],
+  .password-container input[type="text"] {
+    flex-grow: 1;
+    margin-right: 10px;
+  }
+  .show-password {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .show-password input[type="checkbox"] {
+    margin-right: 5px;
+  }
+  .progress-bar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    list-style-type: none;
+    padding: 0;
+  }
+  .progress-bar li {
+    width: 100%;
+    position: relative;
+    text-align: center;
+    color: var(--color2);
+  }
+  .progress-bar li::before {
+    content: attr(data-step);
+    width: 30px;
+    height: 30px;
+    background-color: var(--color2);
+    border-radius: 50%;
+    display: block;
+    margin: 0 auto 10px;
+    line-height: 30px;
+    color: var(--color1);
+  }
+  .progress-bar li.active::before,
+  .progress-bar li.completed::before {
+    background-color: var(--color3);
+    color: #fff;
+  }
+  .progress-bar li.completed::after {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background-color: var(--color3);
+    z-index: -1;
+  }
+  .progress-bar li:first-child::after {
+    display: none;
+  }
+  .chart-container {
+    width: 100%;
+    height: 300px;
+    margin-bottom: 30px;
+  }
+  .step {
+    display: none;
+  }
+  .step.active {
+    display: block;
+  }
+  .input-wrapper {
+    margin-bottom: 15px;
+  }
+</style>
+</head>
+<body>
+  <div class="main-container">
+    <div class="sidebar">
+      <div>
+        <img src="https://www.sbdc.com.br/wp-content/uploads/2021/08/LogoCarreiras-1200x600.png" alt="ENEVA Logo">
+        <h2 id="welcome-message">Bem-vindo ao projeto de produção de hidrogênio da ENEVA</h2>
+        <p id="sidebar-text">Entre com as credenciais realizadas no cadastro, qualquer dúvida, contate um responsável.</p>
+      </div>
+      <div class="home-buttons" id="home-buttons" style="display: none;">
+        <button class="btn-primary" onclick="showCadastro()" id="btn-edit-profile">Alterar meu cadastro</button>
+        <button class="btn-primary" onclick="editPlant()" id="btn-edit-plant">Editar uma planta existente</button>
+        <button class="btn-danger" onclick="logout()" id="btn-logout">Logout</button>
+        <button class="btn-primary" onclick="showAnalyzer()" id="btn-show-analyzer">Green Hydrogen Analyzer</button>
+      </div>
+    </div>
+
+    <button class="home-icon" onclick="showHome()">🏠</button>
+
+    <div class="language-toggle">
+      <label for="language-switch" id="language-label">PT</label>
+      <label class="switch">
+        <input type="checkbox" id="language-switch" onchange="toggleLanguage()">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="container active" id="loginScreen">
+      <h1 id="login-title">Tela de Login</h1>
+      <div class="input-container">
+        <div class="input-wrapper">
+          <label for="login">Usuário:</label>
+          <input type="text" placeholder="" id="login">
+        </div>
+        <div class="input-wrapper">
+          <label for="senha">Senha:</label>
+          <div class="password-container">
+            <input type="password" placeholder="" id="senha">
+            <label class="show-password">
+              <input type="checkbox" onchange="togglePasswordVisibility('senha')">
+              <span id="show-password-text">Mostrar</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="button-container">
+        <button class="btn-primary" onclick="showHome()" id="btn-login">Avançar</button>
+        <button class="btn-secondary" onclick="showCadastro()" id="btn-create-account">Criar Cadastro</button>
+      </div>
+    </div>
+
+    <div class="container" id="cadastroScreen">
+      <h1 id="register-title">Tela de Cadastro</h1>
+      <div class="input-container">
+        <div class="input-wrapper">
+          <label for="nome">Nome Completo:</label>
+          <input type="text" placeholder="" id="nome">
+        </div>
+        <div class="input-wrapper">
+          <label for="cargo">Cargo:</label>
+          <input type="text" placeholder="" id="cargo">
+        </div>
+        <div class="input-wrapper">
+          <label for="email">Email:</label>
+          <input type="email" placeholder="" id="email">
+        </div>
+        <div class="input-wrapper">
+          <label for="senhaCadastro">Crie uma senha:</label>
+          <div class="password-container">
+            <input type="password" placeholder="" id="senhaCadastro">
+            <label class="show-password">
+              <input type="checkbox" onchange="togglePasswordVisibility('senhaCadastro')">
+              <span id="show-password-text-cadastro">Mostrar</span>
+            </label>
+          </div>
+        </div>
+        <div class="input-wrapper">
+          <label for="confirmarSenha">Confirme sua senha:</label>
+          <div class="password-container">
+            <input type="password" placeholder="" id="confirmarSenha" oninput="validatePassword()">
+            <label class="show-password">
+              <input type="checkbox" onchange="togglePasswordVisibility('confirmarSenha')">
+              <span id="show-password-text-confirm">Mostrar</span>
+            </label>
+          </div>
+        </div>
+        <p id="error-message" class="error-message">As senhas não coincidem</p>
+      </div>
+      <div class="button-container">
+        <button class="btn-danger" onclick="showLogin()" id="btn-cancel-register">Cancelar Cadastro</button>
+        <button class="btn-primary" id="btn-complete-register">Concluir Cadastro</button>
+      </div>
+    </div>
+
+    <div class="container" id="homeScreen">
+      <h1 id="home-title">Tela Home</h1>
+      <p id="home-welcome">Bem-vindo à área principal do sistema.</p>
+      <div class="button-container">
+        <button class="btn-primary" onclick="editPlant()" id="btn-edit-existing-plant">Editar uma planta de produção de hidrogênio</button>
+        <button class="btn-secondary" onclick="showCriarPlanta()" id="btn-create-new-plant">Criar nova planta de produção de hidrogênio</button>
+      </div>
+    </div>
+
+    <div class="container" id="criarPlantaScreen">
+      <h1 id="create-plant-title">Cadastro de Nova Planta</h1>
+      <div class="input-container">
+        <div class="input-wrapper">
+          <label for="nomePlanta">Nome da Planta:</label>
+          <input type="text" placeholder="" id="nomePlanta">
+        </div>
+        <div class="input-wrapper">
+          <label for="localizacao">Localização:</label>
+          <input type="text" placeholder="" id="localizacao">
+        </div>
+        <div class="input-wrapper">
+          <label for="tipoProducao">Tipo de Produção:</label>
+          <select id="tipoProducao">
+            <option value="" id="select-production-type">Selecione o tipo de produção de hidrogênio</option>
+            <option value="azul" id="blue-hydrogen">Hidrogênio Azul</option>
+            <option value="verde" id="green-hydrogen">Hidrogênio Verde</option>
+          </select>
+        </div>
+      </div>
+      <div class="button-container">
+        <button class="btn-primary" onclick="showCustosProducao()" id="btn-register-plant">Cadastrar Planta</button>
+        <button class="btn-danger" onclick="showHome()" id="btn-cancel-plant">Cancelar</button>
+      </div>
+    </div>
+
+    <div class="container" id="custosProducaoScreen">
+      <h1 id="production-costs-title">Custos da Produção</h1>
+      <div class="input-container">
+        <div class="input-wrapper">
+          <label for="investimentoCapital">Investimento de capital total (R$):</label>
+          <input type="number" step="0.01" placeholder="" id="investimentoCapital">
+        </div>
+        <div class="input-wrapper">
+          <label for="custoFixoOperacional">Custo fixo operacional total (R$/ano):</label>
+          <input type="number" step="0.01" placeholder="" id="custoFixoOperacional">
+        </div>
+        <div class="input-wrapper">
+          <label for="jurosDivida">Juros da dívida (R$/kg):</label>
+          <input type="number" step="0.01" placeholder="" id="jurosDivida">
+        </div>
+        <div class="input-wrapper">
+          <label for="impostos">Impostos (R$/kg):</label>
+          <input type="number" step="0.01" placeholder="" id="impostos">
+        </div>
+        <div class="input-wrapper">
+          <label for="pagamentoPrincipal">Pagamento de principal (R$/kg):</label>
+          <input type="number" step="0.01" placeholder="" id="pagamentoPrincipal">
+        </div>
+        <div class="input-wrapper">
+          <label for="custoEnergia">Custo de energia (kWh/kg H2):</label>
+          <input type="number" step="0.01" placeholder="" id="custoEnergia">
+        </div>
+        <div class="input-wrapper">
+          <label for="precoEnergia">Preço da energia (R$/kWh):</label>
+          <input type="number" step="0.01" placeholder="" id="precoEnergia">
+        </div>
+        <div class="input-wrapper">
+          <label for="taxaConversao">Taxa de conversão de kWh para kg de H2:</label>
+          <input type="number" placeholder="" id="taxaConversao">
+        </div>
+      </div>
+      <div class="button-container">
+        <button class="btn-primary" onclick="showHome()" id="btn-complete-costs">Concluir Cadastro</button>
+        <button class="btn-danger" onclick="showHome()" id="btn-cancel-costs">Cancelar</button>
+      </div>
+    </div>
+
+    <div class="container" id="analyzerScreen">
+      <h1 id="analyzer-title">Green Hydrogen Analyzer</h1>
+      <ul class="progress-bar">
+        <li class="active" data-step="1" id="step1">Tipo da Planta</li>
+        <li data-step="2" id="step2">Eletrolisador</li>
+        <li data-step="3" id="step3">Parâmetros Financeiros</li>
+        <li data-step="4" id="step4">Preço da Energia</li>
+        <li data-step="5" id="step5">Resultados</li>
+      </ul>
+
+      <div class="step active" id="step-1">
+        <h2>Tipo da Planta</h2>
+        <div class="input-wrapper">
+          <label for="plantType">Tipo de Planta:</label>
+          <select id="plantType">
+            <option value="green">Hidrogênio Verde</option>
+            <option value="blue">Hidrogênio Azul</option>
+          </select>
+        </div>
+        <button onclick="showStep(2)">Próximo</button>
+      </div>
+
+      <div class="step" id="step-2">
+        <h2>Eletrolisador</h2>
+        <div class="input-wrapper">
+          <label for="electrolyzerType">Tipo de Eletrolisador:</label>
+          <select id="electrolyzerType">
+            <option value="alkaline">Alcalino</option>
+            <option value="pem">PEM</option>
+            <option value="soec">SOEC</option>
+          </select>
+        </div>
+        <div class="input-wrapper">
+          <label for="electrolyzerCapacity">Capacidade do Eletrolisador (MW):</label>
+          <input type="number" id="electrolyzerCapacity" min="0" step="0.1">
+        </div>
+        <button onclick="showStep(1)">Anterior</button>
+        <button onclick="showStep(3)">Próximo</button>
+      </div>
+
+      <div class="step" id="step-3">
+        <h2>Parâmetros Financeiros</h2>
+        <div class="input-wrapper">
+          <label for="capex">CAPEX ($/kW):</label>
+          <input type="number" id="capex" min="0" step="0.01">
+        </div>
+        <div class="input-wrapper">
+          <label for="opex">OPEX (% do CAPEX/ano):</label>
+          <input type="number" id="opex" min="0" max="100" step="0.1">
+        </div>
+        <button onclick="showStep(2)">Anterior</button>
+        <button onclick="showStep(4)">Próximo</button>
+      </div>
+
+      <div class="step" id="step-4">
+        <h2>Preço da Energia</h2>
+        <div class="input-wrapper">
+          <label for="energyPrice">Preço da Energia ($/MWh):</label>
+          <input type="number" id="energyPrice" min="0" step="0.01">
+        </div>
+        <button onclick="showStep(3)">Anterior</button>
+        <button onclick="showStep(5)">Próximo</button>
+      </div>
+
+      <div class="step" id="step-5">
+        <h2>Resultados</h2>
+        <div id="results">
+          <div class="chart-container">
+            <canvas id="paybackChart"></canvas>
+          </div>
+          <div class="chart-container">
+            <canvas id="lcohChart"></canvas>
+          </div>
+          <div class="chart-container">
+            <canvas id="monteCarloChart"></canvas>
+          </div>
+        </div>
+        <button onclick="showStep(4)">Anterior</button>
+        <button onclick="calculateResults()">Calcular</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentLanguage = 'pt';
+
+    const translations = {
+      pt: {
+        'welcome-message': 'Bem-vindo ao projeto de produção de hidrogênio da ENEVA',
+        'sidebar-text': 'Entre com as credenciais realizadas no cadastro, qualquer dúvida, contate um responsável.',
+        'btn-edit-profile': 'Alterar meu cadastro',
+        'btn-edit-plant': 'Editar uma planta existente',
+        'btn-logout': 'Logout',
+        'login-title': 'Tela de Login',
+        'btn-login': 'Avançar',
+        'btn-create-account': 'Criar Cadastro',
+        'register-title': 'Tela de Cadastro',
+        'btn-cancel-register': 'Cancelar Cadastro',
+        'btn-complete-register': 'Concluir Cadastro',
+        'home-title': 'Tela Home',
+        'home-welcome': 'Bem-vindo à área principal do sistema.',
+        'btn-edit-existing-plant': 'Editar uma planta de produção de hidrogênio',
+        'btn-create-new-plant': 'Criar nova planta de produção de hidrogênio',
+        'create-plant-title': 'Cadastro de Nova Planta',
+        'select-production-type': 'Selecione o tipo de produção de hidrogênio',
+        'blue-hydrogen': 'Hidrogênio Azul',
+        'green-hydrogen': 'Hidrogênio Verde',
+        'btn-register-plant': 'Cadastrar Planta',
+        'btn-cancel-plant': 'Cancelar',
+        'production-costs-title': 'Custos da Produção',
+        'btn-complete-costs': 'Concluir Cadastro',
+        'btn-cancel-costs': 'Cancelar',
+        'language-label': 'PT',
+        'show-password-text': 'Mostrar',
+        'show-password-text-cadastro': 'Mostrar',
+        'show-password-text-confirm': 'Mostrar',
+        'login': 'Usuário:',
+        'senha': 'Senha:',
+        'nome': 'Nome Completo:',
+        'cargo': 'Cargo:',
+        'email': 'Email:',
+        'senhaCadastro': 'Crie uma senha:',
+        'confirmarSenha': 'Confirme sua senha:',
+        'nomePlanta': 'Nome da Planta:',
+        'localizacao': 'Localização:',
+        'tipoProducao': 'Tipo de Produção:',
+        'investimentoCapital': 'Investimento de capital total (R$):',
+        'custoFixoOperacional': 'Custo fixo operacional total (R$/ano):',
+        'jurosDivida': 'Juros da dívida (R$/kg):',
+        'impostos': 'Impostos (R$/kg):',
+        'pagamentoPrincipal': 'Pagamento de principal (R$/kg):',
+        'custoEnergia': 'Custo de energia (kWh/kg H2):',
+        'precoEnergia': 'Preço da energia (R$/kWh):',
+        'taxaConversao': 'Taxa de conversão de kWh para kg de H2:',
+        'error-message': 'As senhas não coincidem',
+        'analyzer-title': 'Analisador de Hidrogênio Verde',
+        'plantType': 'Tipo de Planta:',
+        'electrolyzerType': 'Tipo de Eletrolisador:',
+        'electrolyzerCapacity': 'Capacidade do Eletrolisador (MW):',
+        'capex': 'CAPEX ($/kW):',
+        'opex': 'OPEX (% do CAPEX/ano):',
+        'energyPrice': 'Preço da Energia ($/MWh):',
+        'step1': 'Tipo da Planta',
+        'step2': 'Eletrolisador',
+        'step3': 'Parâmetros Financeiros',
+        'step4': 'Preço da Energia',
+        'step5': 'Resultados',
+      },
+      en: {
+        'welcome-message': 'Welcome to ENEVA\'s hydrogen production project',
+        'sidebar-text': 'Enter the credentials created during registration. For any questions, contact a manager.',
+        'btn-edit-profile': 'Edit my profile',
+        'btn-edit-plant': 'Edit an existing plant',
+        'btn-logout': 'Logout',
+        'login-title': 'Login Screen',
+        'btn-login': 'Login',
+        'btn-create-account': 'Create Account',
+        'register-title': 'Registration Screen',
+        'btn-cancel-register': 'Cancel Registration',
+        'btn-complete-register': 'Complete Registration',
+        'home-title': 'Home Screen',
+        'home-welcome': 'Welcome to the main system area.',
+        'btn-edit-existing-plant': 'Edit a hydrogen production plant',
+        'btn-create-new-plant': 'Create new hydrogen production plant',
+        'create-plant-title': 'New Plant Registration',
+        'select-production-type': 'Select hydrogen production type',
+        'blue-hydrogen': 'Blue Hydrogen',
+        'green-hydrogen': 'Green Hydrogen',
+        'btn-register-plant': 'Register Plant',
+        'btn-cancel-plant': 'Cancel',
+        'production-costs-title': 'Production Costs',
+        'btn-complete-costs': 'Complete Registration',
+        'btn-cancel-costs': 'Cancel',
+        'language-label': 'EN',
+        'show-password-text': 'Show',
+        'show-password-text-cadastro': 'Show',
+        'show-password-text-confirm': 'Show',
+        'login': 'Username:',
+        'senha': 'Password:',
+        'nome': 'Full Name:',
+        'cargo': 'Position:',
+        'email': 'Email:',
+        'senhaCadastro': 'Create a password:',
+        'confirmarSenha': 'Confirm your password:',
+        'nomePlanta': 'Plant Name:',
+        'localizacao': 'Location:',
+        'tipoProducao': 'Production Type:',
+        'investimentoCapital': 'Total capital investment ($):',
+        'custoFixoOperacional': 'Total operational fixed cost ($/year):',
+        'jurosDivida': 'Debt interest ($/kg):',
+        'impostos': 'Taxes ($/kg):',
+        'pagamentoPrincipal': 'Principal payment ($/kg):',
+        'custoEnergia': 'Energy cost (kWh/kg H2):',
+        'precoEnergia': 'Energy price ($/kWh):',
+        'taxaConversao': 'Conversion rate from kWh to kg of H2:',
+        'error-message': 'Passwords do not match',
+        'analyzer-title': 'Green Hydrogen Analyzer',
+        'plantType': 'Plant Type:',
+        'electrolyzerType': 'Electrolyzer Type:',
+        'electrolyzerCapacity': 'Electrolyzer Capacity (MW):',
+        'capex': 'CAPEX ($/kW):',
+        'opex': 'OPEX (% of CAPEX/year):',
+        'energyPrice': 'Energy Price ($/MWh):',
+        'step1': 'Plant Type',
+        'step2': 'Electrolyzer',
+        'step3': 'Financial Parameters',
+        'step4': 'Energy Price',
+        'step5': 'Results',
+      }
+    };
+
+    function toggleLanguage() {
+      currentLanguage = currentLanguage === 'pt' ? 'en' : 'pt';
+      updateLanguage();
+    }
+
+    function updateLanguage() {
+      const elements = document.querySelectorAll('[id]');
+      elements.forEach(element => {
+        if (translations[currentLanguage][element.id]) {
+          if (element.tagName === 'INPUT' || element.tagName === 'SELECT') {
+            if (element.type !== 'checkbox') {
+              element.placeholder = translations[currentLanguage][element.id];
+            }
+          } else {
+            element.textContent = translations[currentLanguage][element.id];
+          }
+        }
+      });
+
+      const labels = document.querySelectorAll('label');
+      labels.forEach(label => {
+        const forAttribute = label.getAttribute('for');
+        if (forAttribute && translations[currentLanguage][forAttribute]) {
+          label.textContent = translations[currentLanguage][forAttribute];
+        }
+      });
+
+      document.getElementById('language-label').textContent = currentLanguage.toUpperCase();
+    }
+
+    document.addEventListener('DOMContentLoaded', updateLanguage);
+
+    function showCadastro() {
+      hideAllContainers();
+      document.getElementById('cadastroScreen').classList.add('active');
+    }
+
+    function showLogin() {
+      hideAllContainers();
+      document.getElementById('loginScreen').classList.add('active');
+    }
+
+    function showHome() {
+      hideAllContainers();
+      document.getElementById('homeScreen').classList.add('active');
+      document.getElementById('home-buttons').style.display = 'block';
+    }
+
+    function showCriarPlanta() {
+      hideAllContainers();
+      document.getElementById('criarPlantaScreen').classList.add('active');
+    }
+
+    function showCustosProducao() {
+      hideAllContainers();
+      document.getElementById('custosProducaoScreen').classList.add('active');
+    }
+
+    function showAnalyzer() {
+      hideAllContainers();
+      document.getElementById('analyzerScreen').classList.add('active');
+      showStep(1); // Show the first step by default
+    }
+
+    function updateProgressBar(step) {
+      const steps = document.querySelectorAll('.progress-bar li');
+      steps.forEach((li, index) => {
+        if (index < step - 1) {
+          li.classList.add('completed');
+          li.classList.remove('active');
+        } else if (index === step - 1) {
+          li.classList.add('active');
+          li.classList.remove('completed');
+        } else {
+          li.classList.remove('active', 'completed');
+        }
+      });
+    }
+
+    function showStep(step) {
+      const steps = document.querySelectorAll('.step');
+      steps.forEach((div) => div.classList.remove('active'));
+      document.getElementById(`step-${step}`).classList.add('active');
+      updateProgressBar(step);
+    }
+
+    function hideAllContainers() {
+      const containers = document.querySelectorAll('.container');
+      containers.forEach(container => container.classList.remove('active'));
+    }
+
+    function logout() {
+      alert(currentLanguage === 'pt' ? "Logout realizado com sucesso!" : "Logout successful!");
+      showLogin();
+    }
+
+    function validatePassword() {
+      const password = document.getElementById('senhaCadastro');
+      const confirmPassword = document.getElementById('confirmarSenha');
+      const errorMessage = document.getElementById('error-message');
+      if (password.value !== confirmPassword.value) {
+        errorMessage.style.display = 'block';
+      } else {
+        errorMessage.style.display = 'none';
+      }
+    }
+
+    function calculateResults() {
+      const results = document.getElementById('results');
+      
+      // Payback chart
+      const paybackCtx = document.getElementById('paybackChart').getContext('2d');
+      new Chart(paybackCtx, {
+        type: 'line',
+        data: {
+          labels: ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5'],
+          datasets: [{
+            label: 'Cumulative Cash Flow',
+            data: [-1000000, -500000, 0, 500000, 1000000],
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          title: {
+            display: true,
+            text: 'Payback Period'
+          }
+        }
+      });
+
+      // LCOH chart
+      const lcohCtx = document.getElementById('lcohChart').getContext('2d');
+      new Chart(lcohCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Capital Costs', 'Fixed O&M', 'Variable O&M', 'Fuel Costs', 'Total LCOH'],
+          datasets: [{
+            label: 'LCOH Components',
+            data: [1.2, 0.5, 0.3, 0.8, 2.8],
+            backgroundColor: [
+              'rgba(255, 99, 132, 0.5)',
+              'rgba(54, 162, 235, 0.5)',
+              'rgba(255, 206, 86, 0.5)',
+              'rgba(75, 192, 192, 0.5)',
+              'rgba(153, 102, 255, 0.5)'
+            ],
+            borderColor: [
+              'rgb(255, 99, 132)',
+              'rgb(54, 162, 235)',
+              'rgb(255, 206, 86)',
+              'rgb(75, 192, 192)',
+              'rgb(153, 102, 255)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          title: {
+            display: true,
+            text: 'Levelized Cost of Hydrogen (LCOH)'
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: '$/kg H2'
+              }
+            }
+          }
+        }
+      });
+
+      // Monte Carlo chart
+      const monteCarloCtx = document.getElementById('monteCarloChart').getContext('2d');
+      const monteCarloData = [];
+      for (let i = 0; i < 1000; i++) {
+        monteCarloData.push(Math.random() * 5 + 1);
+      }
+      new Chart(monteCarloCtx, {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'Monte Carlo Simulation',
+            data: monteCarloData.map((value, index) => ({ x: index, y: value })),
+            backgroundColor: 'rgba(75, 192, 192, 0.5)'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          title: {
+            display: true,
+            text: 'Monte Carlo Simulation of LCOH'
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Simulation Run'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'LCOH ($/kg H2)'
+              }
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
