@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Hydrogen Analyzer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --color1: #746d5c;
+            --color2: #d4ded8;
+            --color3: #149aa4;
+            --color4: #e67f34;
+            --color5: #fccf5d;
+            --text-color: #333;
+            --background-color: #f3f3f3;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            display: flex;
+            max-width: 1200px;
+            background-color: #ffffff;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .form-container {
+            width: 60%;
+        }
+
+        .icon-container {
+            width: 40%;
+            text-align: center;
+        }
+
+        .icon-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--color1);
+            margin-bottom: 30px;
+        }
+
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        .buttons {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        button {
+            background-color: var(--color3);
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            border-radius: 5px;
+        }
+
+        button:disabled {
+            background-color: var(--color2);
+            cursor: not-allowed;
+        }
+
+        button:hover:enabled {
+            background-color: var(--color4);
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            color: var(--color1);
+        }
+
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--color2);
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+
+        .progress-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .progress-bar li {
+            width: 100%;
+            position: relative;
+            text-align: center;
+            color: var(--color2);
+        }
+
+        .progress-bar li::before {
+            content: attr(data-step);
+            width: 30px;
+            height: 30px;
+            background-color: var(--color2);
+            border-radius: 50%;
+            display: block;
+            margin: 0 auto 10px;
+            line-height: 30px;
+            color: var(--color1);
+        }
+
+        .progress-bar li.active::before,
+        .progress-bar li.completed::before {
+            background-color: var(--color3);
+            color: #fff;
+        }
+
+        .progress-bar li.completed::after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background-color: var(--color3);
+            z-index: -1;
+        }
+
+        .progress-bar li:first-child::after {
+            display: none;
+        }
+
+        svg {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            margin-bottom: 30px;
+        }
+
+        #plant-icon-container,
+        #electrolyzer-icon-container {
+            display: none;
+            width: 100%;
+        }
+
+        #electrolyzer-icon-container {
+            margin-top: 20px;
+        }
+
+        /* Estilos para a tabela de eficiência */
+        .efficiency-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .efficiency-table th,
+        .efficiency-table td {
+            border: 1px solid var(--color2);
+            padding: 8px;
+            text-align: center;
+        }
+
+        .efficiency-table th {
+            background-color: var(--color3);
+            color: #fff;
+        }
+
+        /* Estilos para a tabela de preços de energia */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        table th,
+        table td {
+            border: 1px solid var(--color2);
+            padding: 8px;
+            text-align: center;
+        }
+
+        table th {
+            background-color: var(--color3);
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="form-container">
+            <h1><i class="fas fa-seedling"></i> Green Hydrogen Analyzer</h1>
+            <ul class="progress-bar">
+                <li class="active" data-step="1">Tipo da Planta</li>
+                <li data-step="2">Eletrolisador</li>
+                <li data-step="3">Parâmetros Financeiros</li>
+                <li data-step="4">Resultados</li>
+            </ul>
+
+            <!-- Etapa 1: Tipo da Planta -->
+            <div class="step active" id="step-1">
+                <label for="plant-type"><i class="fas fa-bolt"></i> Tipo de Planta:</label>
+                <select id="plant-type">
+                    <option value="">Selecione...</option>
+                    <option value="grid">Conectada à Rede</option>
+                    <option value="solar">Geração Solar</option>
+                </select>
+                <div id="solar-inputs" style="display:none;">
+                    <label for="peak-power">Potência Fotovoltaica de Pico (MW):</label>
+                    <input type="number" id="peak-power" min="0" step="0.1">
+
+                    <label for="irradiance">Irradiação Solar (kWh/m²/dia):</label>
+                    <input type="number" id="irradiance" min="0" step="0.1">
+                </div>
+                <div class="buttons">
+                    <button id="next-1" disabled>Próximo</button>
+                </div>
+            </div>
+
+            <!-- Etapa 2: Informações do Eletrolisador -->
+            <div class="step" id="step-2">
+                <label for="electrolyzer-type"><i class="fas fa-cogs"></i> Tipo de Eletrolisador:</label>
+                <select id="electrolyzer-type">
+                    <option value="">Selecione...</option>
+                    <option value="pem">PEM</option>
+                    <option value="alkaline">Alcalino</option>
+                    <option value="soec">SOEC</option>
+                </select>
+
+                <label for="nominal-power">Potência Nominal (MW):</label>
+                <input type="number" id="nominal-power" min="0" step="0.1">
+
+                <!-- Campos adicionais para planta conectada à rede -->
+                <div id="grid-operation-fields" style="display: none;">
+                    <label for="daily-operation-hours">Número de horas de operação diária:</label>
+                    <input type="number" id="daily-operation-hours" min="0" max="24" step="1">
+
+                    <label for="weekly-operation-days">Número de dias da semana que irá operar:</label>
+                    <input type="number" id="weekly-operation-days" min="0" max="7" step="1">
+                </div>
+
+                <label for="efficiency-option">Curva de Eficiência:</label>
+                <select id="efficiency-option">
+                    <option value="">Selecione...</option>
+                    <option value="database">Usar Base de Dados Interna</option>
+                    <option value="manual">Inserir Manualmente</option>
+                </select>
+
+                <div id="efficiency-table-container" style="display: none;">
+                    <table class="efficiency-table">
+                        <thead>
+                            <tr>
+                                <th>% da Potência Nominal</th>
+                                <th>Eficiência (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Linhas de exemplo -->
+                            <tr>
+                                <td>10%</td>
+                                <td><input type="number" min="0" max="100" step="0.1" class="efficiency-input"></td>
+                            </tr>
+                            <tr>
+                                <td>20%</td>
+                                <td><input type="number" min="0" max="100" step="0.1" class="efficiency-input"></td>
+                            </tr>
+                            <tr>
+                                <td>30%</td>
+                                <td><input type="number" min="0" max="100" step="0.1" class="efficiency-input"></td>
+                            </tr>
+                            <tr>
+                                <td>40%</td>
+                                <td><input type="number" min="0" max="100" step="0.1" class="efficiency-input"></td>
+                            </tr>
+                            <tr>
+                                <td>50%</td>
+                                <td><input type="number" min="0" max="100" step="0.1" class="efficiency-input"></td>
+                            </tr>
+                            <tr>
+                                <td>60%</td>
+                                <td><input type="number" min="0" max="100" step="0.1" class="efficiency-input"></td>
+                            </tr>
+                            <tr>
+                                <td>70%</td>
+                                <td><input type="number" min="0" max="100" step="0.1" class="efficiency-input"></td>
+                            </tr>
+                            <tr>
+                                <td>80%</td>
+                                <td><input type="number" min="0" max="100" step="0.1" class="efficiency-input"></td>
+                            </tr>
+                            <tr>
+                                <td>90%</td>
+                                <td><input type="number" min="0" max="100" step="0.1" class="efficiency-input"></td>
+                            </tr>
+                            <tr>
+                                <td>100%</td>
+                                <td><input type="number" min="0" max="100" step="0.1" class="efficiency-input"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="buttons">
+                    <button id="back-2">Voltar</button>
+                    <button id="next-2" disabled>Próximo</button>
+                </div>
+            </div>
+
+            <!-- Etapa 3: Parâmetros Financeiros -->
+            <div class="step" id="step-3">
+                <label for="capex"><i class="fas fa-money-bill-wave"></i> CAPEX (USD):</label>
+                <input type="number" id="capex" min="0" step="1000">
+
+                <label for="opex">OPEX Anual (USD):</label>
+                <input type="number" id="opex" min="0" step="1000">
+
+                <label for="discount-rate">Taxa de Desconto (%):</label>
+                <input type="number" id="discount-rate" min="0" step="0.1">
+
+                <!-- Seção de Preços de Energia para Conectada à Rede -->
+                <div id="energy-price-section" style="display: none;">
+                    <h3><i class="fas fa-sun"></i> Preços de Energia</h3>
+                    <p>Deseja utilizar a base de dados interna ou inserir manualmente?</p>
+                    <select id="energy-price-option">
+                        <option value="">Selecione...</option>
+                        <option value="database">Base de Dados Interna</option>
+                        <option value="manual">Inserir Manualmente</option>
+                    </select>
+                    <div id="manual-inputs" style="display:none;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Mês</th>
+                                    <th>Preço (USD/MWh)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Janeiro</td>
+                                    <td><input type="number" min="0" step="0.01" class="energy-price-input"></td>
+                                </tr>
+                                <tr>
+                                    <td>Fevereiro</td>
+                                    <td><input type="number" min="0" step="0.01" class="energy-price-input"></td>
+                                </tr>
+                                <tr>
+                                    <td>Março</td>
+                                    <td><input type="number" min="0" step="0.01" class="energy-price-input"></td>
+                                </tr>
+                                <tr>
+                                    <td>Abril</td>
+                                    <td><input type="number" min="0" step="0.01" class="energy-price-input"></td>
+                                </tr>
+                                <tr>
+                                    <td>Maio</td>
+                                    <td><input type="number" min="0" step="0.01" class="energy-price-input"></td>
+                                </tr>
+                                <tr>
+                                    <td>Junho</td>
+                                    <td><input type="number" min="0" step="0.01" class="energy-price-input"></td>
+                                </tr>
+                                <tr>
+                                    <td>Julho</td>
+                                    <td><input type="number" min="0" step="0.01" class="energy-price-input"></td>
+                                </tr>
+                                <tr>
+                                    <td>Agosto</td>
+                                    <td><input type="number" min="0" step="0.01" class="energy-price-input"></td>
+                                </tr>
+                                <tr>
+                                    <td>Setembro</td>
+                                    <td><input type="number" min="0" step="0.01" class="energy-price-input"></td>
+                                </tr>
+                                <tr>
+                                    <td>Outubro</td>
+                                    <td><input type="number" min="0" step="0.01" class="energy-price-input"></td>
+                                </tr>
+                                <tr>
+                                    <td>Novembro</td>
+                                    <td><input type="number" min="0" step="0.01" class="energy-price-input"></td>
+                                </tr>
+                                <tr>
+                                    <td>Dezembro</td>
+                                    <td><input type="number" min="0" step="0.01" class="energy-price-input"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Seção de Custo da Usina Solar -->
+                <div id="solar-cost-section" style="display: none;">
+                    <label for="include-solar-cost">Deseja considerar o custo da construção da usina solar?</label>
+                    <select id="include-solar-cost">
+                        <option value="">Selecione...</option>
+                        <option value="yes">Sim</option>
+                        <option value="no">Não</option>
+                    </select>
+
+                    <div id="solar-cost-inputs" style="display: none;">
+                        <label for="solar-capex">CAPEX da Usina Solar (USD):</label>
+                        <input type="number" id="solar-capex" min="0" step="1000">
+
+                        <label for="solar-opex">OPEX Anual da Usina Solar (USD):</label>
+                        <input type="number" id="solar-opex" min="0" step="1000">
+                    </div>
+                </div>
+
+                <div class="buttons">
+                    <button id="back-3">Voltar</button>
+                    <button id="next-3" disabled>Próximo</button>
+                </div>
+            </div>
+
+            <!-- Etapa 4: Resultados -->
+            <div class="step" id="step-4">
+                <div class="results" id="results">
+                    <h2><i class="fas fa-chart-line"></i> Resultados dos Cálculos</h2>
+                    <p>Payback: <span id="payback-result"></span> anos</p>
+                    <p>LCOH: <span id="lcoh-result"></span> USD/kg</p>
+                    <h3>Dashboard Interativo</h3>
+                    <div class="chart-container">
+                        <canvas id="paybackChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="lcohChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="sensitivityChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="monteCarloChart"></canvas>
+                    </div>
+                </div>
+                <div class="buttons">
+                    <button id="back-4">Voltar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Caixa de ícones SVG -->
+        <div class="icon-container">
+            <div class="icon-wrapper">
+                <div id="plant-icon-container"></div>
+                <div id="electrolyzer-icon-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedPlantType = '';
+
+        function updateProgressBar(step) {
+            const steps = document.querySelectorAll('.progress-bar li');
+            steps.forEach((li, index) => {
+                if (index < step - 1) {
+                    li.classList.add('completed');
+                    li.classList.remove('active');
+                } else if (index === step - 1) {
+                    li.classList.add('active');
+                    li.classList.remove('completed');
+                } else {
+                    li.classList.remove('active', 'completed');
+                }
+            });
+        }
+
+        function showStep(step) {
+            const steps = document.querySelectorAll('.step');
+            steps.forEach((div) => div.classList.remove('active'));
+            document.getElementById(`step-${step}`).classList.add('active');
+            updateProgressBar(step);
+
+            // Mostrar ou ocultar campos adicionais na Etapa 2
+            if (step === 2) {
+                const gridFields = document.getElementById('grid-operation-fields');
+                if (selectedPlantType === 'grid') {
+                    gridFields.style.display = 'block';
+                } else {
+                    gridFields.style.display = 'none';
+                }
+            }
+
+            // Mostrar ou ocultar seções adicionais na Etapa 3
+            if (step === 3) {
+                const energyPriceSection = document.getElementById('energy-price-section');
+                const solarCostSection = document.getElementById('solar-cost-section');
+                if (selectedPlantType === 'grid') {
+                    energyPriceSection.style.display = 'block';
+                    solarCostSection.style.display = 'none';
+                } else if (selectedPlantType === 'solar') {
+                    energyPriceSection.style.display = 'none';
+                    solarCostSection.style.display = 'block';
+                } else {
+                    energyPriceSection.style.display = 'none';
+                    solarCostSection.style.display = 'none';
+                }
+                validateStep3();
+            }
+        }
+
+        // Etapa 1: Validação e navegação
+        const next1 = document.getElementById('next-1');
+        const plantTypeSelect = document.getElementById('plant-type');
+        const peakPowerInput = document.getElementById('peak-power');
+        const irradianceInput = document.getElementById('irradiance');
+
+        function validateStep1() {
+            if (selectedPlantType === 'solar') {
+                if (peakPowerInput.value && irradianceInput.value) {
+                    next1.disabled = false;
+                } else {
+                    next1.disabled = true;
+                }
+            } else if (selectedPlantType === 'grid') {
+                next1.disabled = false;
+            } else {
+                next1.disabled = true;
+            }
+        }
+
+        plantTypeSelect.addEventListener('change', function () {
+            selectedPlantType = this.value;
+            const plantIconContainer = document.getElementById('plant-icon-container');
+            const solarInputs = document.getElementById('solar-inputs');
+
+            if (selectedPlantType === 'solar') {
+                solarInputs.style.display = 'block';
+                plantIconContainer.style.display = 'block';
+                plantIconContainer.innerHTML = `
+                <!-- Ícone da planta solar -->
+               <svg width="425" height="310" viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Sol acima dos painéis -->
+                    <circle cx="300" cy="80" r="40" fill="#fccf5d" />
+                    <g stroke="#fccf5d" stroke-width="3">
+                        <line x1="300" y1="10" x2="300" y2="40" />
+                        <line x1="300" y1="120" x2="300" y2="150" />
+                        <line x1="230" y1="80" x2="260" y2="80" />
+                        <line x1="340" y1="80" x2="370" y2="80" />
+                        <line x1="260" y1="40" x2="280" y2="60" />
+                        <line x1="340" y1="40" x2="320" y2="60" />
+                        <line x1="260" y1="120" x2="280" y2="100" />
+                        <line x1="340" y1="120" x2="320" y2="100" />
+                    </g>
+
+                    <!-- Base da Planta -->
+                    <rect x="50" y="280" width="500" height="40" fill="#746d5c" />
+
+                    <!-- Painéis Solares com Quadriculado -->
+                    <g transform="translate(100, 150)">
+                        <!-- Primeiro painel com quadriculado -->
+                        <rect x="0" y="0" width="100" height="50" fill="#149aa4" />
+                        <!-- Grade (Quadriculado) do primeiro painel -->
+                        <g stroke="#ffffff" stroke-width="1.5">
+                            <!-- Linhas horizontais -->
+                            <line x1="0" y1="10" x2="100" y2="10" />
+                            <line x1="0" y1="20" x2="100" y2="20" />
+                            <line x1="0" y1="30" x2="100" y2="30" />
+                            <line x1="0" y1="40" x2="100" y2="40" />
+                            <!-- Linhas verticais -->
+                            <line x1="20" y1="0" x2="20" y2="50" />
+                            <line x1="40" y1="0" x2="40" y2="50" />
+                            <line x1="60" y1="0" x2="60" y2="50" />
+                            <line x1="80" y1="0" x2="80" y2="50" />
+                        </g>
+
+                        <!-- Segundo painel com quadriculado -->
+                        <rect x="120" y="0" width="100" height="50" fill="#149aa4" />
+                        <!-- Grade (Quadriculado) do segundo painel -->
+                        <g stroke="#ffffff" stroke-width="1.5">
+                            <!-- Linhas horizontais -->
+                            <line x1="120" y1="10" x2="220" y2="10" />
+                            <line x1="120" y1="20" x2="220" y2="20" />
+                            <line x1="120" y1="30" x2="220" y2="30" />
+                            <line x1="120" y1="40" x2="220" y2="40" />
+                            <!-- Linhas verticais -->
+                            <line x1="140" y1="0" x2="140" y2="50" />
+                            <line x1="160" y1="0" x2="160" y2="50" />
+                            <line x1="180" y1="0" x2="180" y2="50" />
+                            <line x1="200" y1="0" x2="200" y2="50" />
+                        </g>
+
+                        <!-- Terceiro painel com quadriculado -->
+                        <rect x="240" y="0" width="100" height="50" fill="#149aa4" />
+                        <!-- Grade (Quadriculado) do terceiro painel -->
+                        <g stroke="#ffffff" stroke-width="1.5">
+                            <!-- Linhas horizontais -->
+                            <line x1="240" y1="10" x2="340" y2="10" />
+                            <line x1="240" y1="20" x2="340" y2="20" />
+                            <line x1="240" y1="30" x2="340" y2="30" />
+                            <line x1="240" y1="40" x2="340" y2="40" />
+                            <!-- Linhas verticais -->
+                            <line x1="260" y1="0" x2="260" y2="50" />
+                            <line x1="280" y1="0" x2="280" y2="50" />
+                            <line x1="300" y1="0" x2="300" y2="50" />
+                            <line x1="320" y1="0" x2="320" y2="50" />
+                        </g>
+                    </g>
+
+                    <!-- Suporte dos Painéis -->
+                    <rect x="120" y="200" width="10" height="80" fill="#746d5c" />
+                    <rect x="240" y="200" width="10" height="80" fill="#746d5c" />
+                    <rect x="360" y="200" width="10" height="80" fill="#746d5c" />
+
+                    <!-- Sombras -->
+                    <ellipse cx="170" cy="330" rx="50" ry="10" fill="rgba(0,0,0,0.2)" />
+                    <ellipse cx="290" cy="330" rx="50" ry="10" fill="rgba(0,0,0,0.2)" />
+                    <ellipse cx="410" cy="330" rx="50" ry="10" fill="rgba(0,0,0,0.2)" />
+                </svg>
+                `;
+            } else if (selectedPlantType === 'grid') {
+                solarInputs.style.display = 'none';
+                plantIconContainer.style.display = 'block';
+                plantIconContainer.innerHTML = `
+                <!-- Ícone da planta conectada à rede -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+                    <!-- Poste de concreto -->
+                    <rect x="280" y="100" width="40" height="250" fill="#8d8d8d" />
+
+                    <!-- Cruzeta -->
+                    <rect x="240" y="100" width="120" height="10" fill="#5a5a5a" />
+
+                    <!-- Fios de energia -->
+                    <line x1="100" y1="105" x2="240" y2="105" stroke="#000000" stroke-width="4" />
+                    <line x1="360" y1="105" x2="500" y2="105" stroke="#000000" stroke-width="4" />
+
+                    <line x1="100" y1="115" x2="240" y2="115" stroke="#000000" stroke-width="4" />
+                    <line x1="360" y1="115" x2="500" y2="115" stroke="#000000" stroke-width="4" />
+
+                    <line x1="100" y1="125" x2="240" y2="125" stroke="#000000" stroke-width="4" />
+                    <line x1="360" y1="125" x2="500" y2="125" stroke="#000000" stroke-width="4" />
+
+                    <!-- Isoladores -->
+                    <circle cx="240" cy="105" r="5" fill="#ffcc00" />
+                    <circle cx="240" cy="115" r="5" fill="#ffcc00" />
+                    <circle cx="240" cy="125" r="5" fill="#ffcc00" />
+
+                    <circle cx="360" cy="105" r="5" fill="#ffcc00" />
+                    <circle cx="360" cy="115" r="5" fill="#ffcc00" />
+                    <circle cx="360" cy="125" r="5" fill="#ffcc00" />
+
+                    <!-- Transformador -->
+                    <!-- Buchas de entrada e saída (três buchas para sistema trifásico) com cor de cobre -->
+                    <!-- Bucha 1 inclinada para a esquerda (fase 1) -->
+                    <rect x="270" y="160" width="10" height="30" fill="#b87333" transform="rotate(-20 275 160)" />
+                    <circle cx="275" cy="160" r="5" fill="#b87333" />
+
+                    <!-- Bucha 2 (fase 2) -->
+                    <rect x="295" y="160" width="10" height="30" fill="#b87333" />
+                    <circle cx="300" cy="160" r="5" fill="#b87333" />
+
+                    <!-- Bucha 3 inclinada para a direita (fase 3) -->
+                    <rect x="320" y="160" width="10" height="30" fill="#b87333" transform="rotate(20 325 160)" />
+                    <circle cx="325" cy="160" r="5" fill="#b87333" />
+
+                    <!-- Tanque principal -->
+                    <rect x="270" y="180" width="60" height="60" fill="#505050" rx="5" ry="5" />
+
+                    <!-- Aletas de resfriamento -->
+                    <rect x="260" y="190" width="10" height="40" fill="#505050" />
+                    <rect x="330" y="190" width="10" height="40" fill="#505050" />
+
+                    <!-- Olhal de içamento -->
+                    <circle cx="300" cy="180" r="5" fill="#505050" />
+
+                    <!-- Sombra do poste -->
+                    <ellipse cx="300" cy="350" rx="50" ry="10" fill="rgba(0, 0, 0, 0.2)" />
+                </svg>
+                `;
+            } else {
+                solarInputs.style.display = 'none';
+                plantIconContainer.style.display = 'none';
+                plantIconContainer.innerHTML = ``;
+            }
+            validateStep1();
+        });
+
+        peakPowerInput.addEventListener('input', validateStep1);
+        irradianceInput.addEventListener('input', validateStep1);
+
+        next1.addEventListener('click', () => showStep(2));
+
+        // Etapa 2: Validação e navegação
+        const next2 = document.getElementById('next-2');
+        const back2 = document.getElementById('back-2');
+        const electrolyzerTypeSelect = document.getElementById('electrolyzer-type');
+        const nominalPowerInput = document.getElementById('nominal-power');
+        const efficiencyOptionSelect = document.getElementById('efficiency-option');
+        const efficiencyTableContainer = document.getElementById('efficiency-table-container');
+        const efficiencyInputs = document.querySelectorAll('.efficiency-input');
+
+        // Novos campos para operação conectada à rede
+        const dailyOperationHoursInput = document.getElementById('daily-operation-hours');
+        const weeklyOperationDaysInput = document.getElementById('weekly-operation-days');
+
+        function validateStep2() {
+            let isValid = true;
+
+            if (!electrolyzerTypeSelect.value || !nominalPowerInput.value || !efficiencyOptionSelect.value) {
+                isValid = false;
+            } else if (efficiencyOptionSelect.value === 'manual') {
+                efficiencyInputs.forEach(input => {
+                    if (!input.value) {
+                        isValid = false;
+                    }
+                });
+            }
+
+            // Validação adicional para planta conectada à rede
+            if (selectedPlantType === 'grid') {
+                if (!dailyOperationHoursInput.value || !weeklyOperationDaysInput.value) {
+                    isValid = false;
+                }
+            }
+
+            next2.disabled = !isValid;
+        }
+
+        efficiencyOptionSelect.addEventListener('change', function () {
+            if (this.value === 'manual') {
+                efficiencyTableContainer.style.display = 'block';
+            } else {
+                efficiencyTableContainer.style.display = 'none';
+            }
+            validateStep2();
+        });
+
+        efficiencyInputs.forEach(input => {
+            input.addEventListener('input', validateStep2);
+        });
+
+        electrolyzerTypeSelect.addEventListener('change', function () {
+            const electrolyzerType = this.value;
+            const electrolyzerIconContainer = document.getElementById('electrolyzer-icon-container');
+
+            if (electrolyzerType === 'pem') {
+                electrolyzerIconContainer.style.display = 'block';
+                electrolyzerIconContainer.innerHTML = `
+                    <!-- Novo Ícone do Eletrolisador PEM -->
+<svg xmlns="http://www.w3.org/2000/svg" width="341" height="400" viewBox="0 0 600 400">
+  <defs>
+    <linearGradient id="gradientCell" x1="0%" y1="0%" x2="100%">
+      <stop offset="0%" style="stop-color:#149aa4; stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0288d1; stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
+      <feOffset dx="3" dy="3" result="offsetblur" />
+      <feFlood flood-color="rgba(0,0,0,0.5)" />
+      <feComposite in2="offsetblur" operator="in" />
+      <feMerge>
+        <feMergeNode />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Linha de energia (vertical) com extremidades quadradas -->
+  <rect x="290" y="0" width="20" height="150" fill="#000000" />
+
+  <!-- Círculos representando o pulso de energia SOBRE o cabo -->
+  <circle class="pulse-circle" cx="300" cy="10" r="8" fill="#808080">
+    <animate attributeName="cy" from="10" to="150" dur="1.5s" repeatCount="indefinite" />
+  </circle>
+  <circle class="pulse-circle" cx="300" cy="50" r="8" fill="#808080">
+    <animate attributeName="cy" from="50" to="150" dur="1.5s" repeatCount="indefinite" begin="0.2s" />
+  </circle>
+  <circle class="pulse-circle" cx="300" cy="90" r="8" fill="#808080">
+    <animate attributeName="cy" from="90" to="150" dur="1.5s" repeatCount="indefinite" begin="0.4s" />
+  </circle>
+
+  <!-- Eletrolisador PEM -->
+  <rect x="130" y="150" width="340" height="150" fill="url(#gradientCell)" filter="url(#shadow)" />
+
+  <!-- Linhas representando a membrana -->
+  <line x1="150" y1="180" x2="450" y2="180" stroke="#ffffff" stroke-width="2" />
+  <line x1="150" y1="200" x2="450" y2="200" stroke="#ffffff" stroke-width="2" />
+  <line x1="150" y1="220" x2="450" y2="220" stroke="#ffffff" stroke-width="2" />
+  <line x1="150" y1="240" x2="450" y2="240" stroke="#ffffff" stroke-width="2" />
+  <line x1="150" y1="260" x2="450" y2="260" stroke="#ffffff" stroke-width="2" />
+
+  <!-- Eletrodos -->
+  <rect x="130" y="190" width="25" height="70" fill="#e67f34" filter="url(#shadow)"/>
+  <text x="135" y="230" font-size="24" fill="#ffffff">-</text>
+  <rect x="445" y="190" width="25" height="70" fill="#472f26" filter="url(#shadow)"/> 
+  <text x="450" y="230" font-size="24" fill="#ffffff">+</text> 
+
+  <!-- Círculos representando conectores -->
+  <circle cx="125" cy="170" r="8" fill="#e67f34"/>
+  <circle cx="125" cy="290" r="8" fill="#e67f34"/>
+  <circle cx="478" cy="290" r="8" fill="#472f26"/>
+  <circle cx="478" cy="170" r="8" fill="#472f26"/>
+
+  <!-- Sombra -->
+  <ellipse cx="300" cy="350" rx="170" ry="15" fill="rgba(0,0,0,0.2)" />
+</svg>
+
+
+                `;
+            } else if (electrolyzerType === 'alkaline') {
+                electrolyzerIconContainer.style.display = 'block';
+                electrolyzerIconContainer.innerHTML = `
+<svg xmlns="http://www.w3.org/2000/svg" width="341" height="400" viewBox="0 0 600 400">
+  <defs>
+    <!-- Gradiente para o eletrolisador Alcalino -->
+    <linearGradient id="gradientAlkaline" x1="0%" y1="0%" x2="100%">
+      <stop offset="0%" style="stop-color:#8ecae6; stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#219ebc; stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
+      <feOffset dx="3" dy="3" result="offsetblur" />
+      <feFlood flood-color="rgba(0,0,0,0.5)" />
+      <feComposite in2="offsetblur" operator="in" />
+      <feMerge>
+        <feMergeNode />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Conector - Linha de energia (vertical) com extremidades quadradas e mesma largura do SOEC -->
+  <rect x="290" y="0" width="20" height="150" fill="#000000" rx="0" />
+
+  <!-- Círculos representando o pulso de energia SOBRE o cabo -->
+  <circle class="pulse-circle" cx="300" cy="10" r="8" fill="#808080">
+    <animate attributeName="cy" from="10" to="150" dur="1.5s" repeatCount="indefinite" />
+  </circle>
+  <circle class="pulse-circle" cx="300" cy="50" r="8" fill="#808080">
+    <animate attributeName="cy" from="50" to="150" dur="1.5s" repeatCount="indefinite" begin="0.2s" />
+  </circle>
+  <circle class="pulse-circle" cx="300" cy="90" r="8" fill="#808080">
+    <animate attributeName="cy" from="90" to="150" dur="1.5s" repeatCount="indefinite" begin="0.4s" />
+  </circle>
+
+  <!-- Estrutura do Eletrolisador Alcalino -->
+  <rect x="100" y="100" width="400" height="200" rx="15" ry="15" fill="url(#gradientAlkaline)" filter="url(#shadow)" />
+  
+  <!-- Eletrodos porosos -->
+  <rect x="130" y="120" width="30" height="160" fill="#e67f34" />
+  <rect x="440" y="120" width="30" height="160" fill="#6d4c41" />
+
+  <!-- Linhas grossas representando o separador -->
+  <rect x="292" y="110" width="20" height="180" fill="#ffffff" opacity="0.8" />
+  <rect x="300" y="100" width="5" height="200" fill="#d1d1d1" />
+
+  <!-- Sinais de "+" e "-" -->
+  <text x="140" y="180" font-size="36" fill="#ffffff">-</text>
+  <text x="445" y="180" font-size="36" fill="#ffffff">+</text>
+
+  <!-- Bolhas representando a solução borbulhante -->
+  <circle cx="160" cy="240" r="8" fill="#bbdefb" />
+  <circle cx="180" cy="220" r="10" fill="#90caf9" />
+  <circle cx="340" cy="260" r="7" fill="#bbdefb" />
+  <circle cx="320" cy="240" r="9" fill="#90caf9" />
+  <circle cx="360" cy="220" r="11" fill="#64b5f6" />
+
+  <!-- Saída de gás hidrogênio e oxigênio -->
+  <circle cx="130" cy="90" r="10" fill="#e67f34" />
+  <circle cx="470" cy="90" r="10" fill="#6d4c41" />
+
+  <!-- Labels para H₂ e O₂ -->
+  <text x="110" y="80" font-size="16" fill="#ffffff">H₂</text>
+  <text x="460" y="80" font-size="16" fill="#ffffff">O₂</text>
+
+  <!-- Sombra do eletrolisador -->
+  <ellipse cx="300" cy="330" rx="200" ry="20" fill="rgba(0,0,0,0.2)" />
+</svg>
+
+                `;
+            } else if (electrolyzerType === 'soec') {
+                electrolyzerIconContainer.style.display = 'block';
+                electrolyzerIconContainer.innerHTML = `
+                    <!-- Ícone do Eletrolisador SOEC -->
+<svg xmlns="http://www.w3.org/2000/svg" width="341" height="400" viewBox="0 0 600 400">
+  <defs>
+    <!-- Gradiente para representar o calor no SOEC -->
+    <linearGradient id="gradientSOEC" x1="0%" y1="0%" x2="100%">
+      <stop offset="0%" style="stop-color:#fca311; stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d62828; stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
+      <feOffset dx="3" dy="3" result="offsetblur" />
+      <feFlood flood-color="rgba(0,0,0,0.5)" />
+      <feComposite in2="offsetblur" operator="in" />
+      <feMerge>
+        <feMergeNode />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Linha de energia (vertical) com extremidades quadradas -->
+  <rect x="290" y="0" width="20" height="150" fill="#000000" />
+
+  <!-- Círculos representando o pulso de energia SOBRE o cabo -->
+  <circle class="pulse-circle" cx="300" cy="10" r="8" fill="#808080">
+    <animate attributeName="cy" from="10" to="150" dur="1.5s" repeatCount="indefinite" />
+  </circle>
+  <circle class="pulse-circle" cx="300" cy="50" r="8" fill="#808080">
+    <animate attributeName="cy" from="50" to="150" dur="1.5s" repeatCount="indefinite" begin="0.2s" />
+  </circle>
+  <circle class="pulse-circle" cx="300" cy="90" r="8" fill="#808080">
+    <animate attributeName="cy" from="90" to="150" dur="1.5s" repeatCount="indefinite" begin="0.4s" />
+  </circle>
+
+  <!-- Estrutura do SOEC -->
+  <rect x="100" y="100" width="400" height="200" rx="15" ry="15" fill="url(#gradientSOEC)" filter="url(#shadow)" />
+
+  <!-- Eletrodos cerâmicos -->
+  <rect x="110" y="120" width="30" height="160" fill="#4a4e69" />
+  <rect x="460" y="120" width="30" height="160" fill="#6d6875" />
+
+  <!-- Camada de eletrólito sólido -->
+  <rect x="250" y="110" width="105" height="180" fill="#ffffff" opacity="0.8" />
+  <rect x="300" y="100" width="5" height="200" fill="#bfc0c0" />
+
+  <!-- Sinais de "+" e "-" -->
+  <text x="118" y="180" font-size="36" fill="#ffffff">-</text>
+  <text x="465" y="180" font-size="36" fill="#ffffff">+</text>
+
+  <!-- Saída de gás H₂ e O₂ -->
+  <circle cx="130" cy="90" r="10" fill="#4a4e69" />
+  <circle cx="470" cy="90" r="10" fill="#6d6875" />
+
+  <!-- Labels para H₂ e O₂ -->
+  <text x="110" y="80" font-size="16" fill="#ffffff">H₂</text>
+  <text x="460" y="80" font-size="16" fill="#ffffff">O₂</text>
+
+  <!-- Representação de alta temperatura com pequenas ondas de calor -->
+  <path d="M150,250 C160,240 170,260 180,250 S210,260 220,250 S250,260 260,250" stroke="#ffad42" stroke-width="3" fill="none" />
+  <path d="M350,250 C360,240 370,260 380,250 S410,260 420,250 S450,260 460,250" stroke="#ffad42" stroke-width="3" fill="none" />
+
+  <!-- Sombra do eletrolisador -->
+  <ellipse cx="300" cy="340" rx="200" ry="20" fill="rgba(0,0,0,0.2)" />
+</svg>
+
+
+                `;
+            } else {
+                electrolyzerIconContainer.style.display = 'none';
+                electrolyzerIconContainer.innerHTML = ``;
+            }
+            validateStep2();
+        });
+
+        nominalPowerInput.addEventListener('input', validateStep2);
+
+        // Eventos para os novos campos
+        dailyOperationHoursInput.addEventListener('input', validateStep2);
+        weeklyOperationDaysInput.addEventListener('input', validateStep2);
+
+        // Eventos para outros campos
+        electrolyzerTypeSelect.addEventListener('change', validateStep2);
+        efficiencyOptionSelect.addEventListener('change', validateStep2);
+
+        next2.addEventListener('click', () => showStep(3));
+        back2.addEventListener('click', () => showStep(1));
+
+        // Etapa 3: Validação e navegação
+        const next3 = document.getElementById('next-3');
+        const back3 = document.getElementById('back-3');
+        const capexInput = document.getElementById('capex');
+        const opexInput = document.getElementById('opex');
+        const discountRateInput = document.getElementById('discount-rate');
+
+        const energyPriceSection = document.getElementById('energy-price-section');
+        const energyPriceOptionSelect = document.getElementById('energy-price-option');
+        const manualInputsDiv = document.getElementById('manual-inputs');
+        const energyPriceInputs = document.querySelectorAll('.energy-price-input');
+
+        const solarCostSection = document.getElementById('solar-cost-section');
+        const includeSolarCostSelect = document.getElementById('include-solar-cost');
+        const solarCostInputsDiv = document.getElementById('solar-cost-inputs');
+        const solarCapexInput = document.getElementById('solar-capex');
+        const solarOpexInput = document.getElementById('solar-opex');
+
+        function validateStep3() {
+            let isValid = true;
+
+            // Verificar os campos principais
+            if (!capexInput.value || !opexInput.value || !discountRateInput.value) {
+                isValid = false;
+            }
+
+            if (selectedPlantType === 'grid') {
+                // Verificar opção de preço de energia
+                if (!energyPriceOptionSelect.value) {
+                    isValid = false;
+                } else if (energyPriceOptionSelect.value === 'manual') {
+                    energyPriceInputs.forEach(input => {
+                        if (!input.value) {
+                            isValid = false;
+                        }
+                    });
+                }
+            } else if (selectedPlantType === 'solar') {
+                // Verificar se deseja considerar o custo da usina solar
+                if (!includeSolarCostSelect.value) {
+                    isValid = false;
+                } else if (includeSolarCostSelect.value === 'yes') {
+                    if (!solarCapexInput.value || !solarOpexInput.value) {
+                        isValid = false;
+                    }
+                }
+            }
+
+            next3.disabled = !isValid;
+        }
+
+        capexInput.addEventListener('input', validateStep3);
+        opexInput.addEventListener('input', validateStep3);
+        discountRateInput.addEventListener('input', validateStep3);
+
+        energyPriceOptionSelect.addEventListener('change', function () {
+            if (this.value === 'manual') {
+                manualInputsDiv.style.display = 'block';
+            } else {
+                manualInputsDiv.style.display = 'none';
+            }
+            validateStep3();
+        });
+
+        energyPriceInputs.forEach(input => {
+            input.addEventListener('input', validateStep3);
+        });
+
+        includeSolarCostSelect.addEventListener('change', function () {
+            if (this.value === 'yes') {
+                solarCostInputsDiv.style.display = 'block';
+            } else {
+                solarCostInputsDiv.style.display = 'none';
+            }
+            validateStep3();
+        });
+
+        solarCapexInput.addEventListener('input', validateStep3);
+        solarOpexInput.addEventListener('input', validateStep3);
+
+        next3.addEventListener('click', () => showStep(4));
+        back3.addEventListener('click', () => showStep(2));
+
+        // Etapa 4: Navegação
+        const back4 = document.getElementById('back-4');
+        back4.addEventListener('click', () => showStep(3));
+
+        // Inicialização
+        validateStep1();
+        validateStep2();
+        validateStep3();
+    </script>
+</body>
+
+</html>
