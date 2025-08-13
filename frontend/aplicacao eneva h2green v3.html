@@ -1,0 +1,951 @@
+<html><head><base href="." />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Produção de Hidrogênio</title>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0 20px; /* Add horizontal padding to body */
+        background-color: #f0f2f5;
+    }
+
+    .header-bar {
+        background-color: white;
+        padding: 15px 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        text-align: center; /* Changed to center */
+        max-width: 1200px; /* Match container max-width */
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .header-title {
+        font-size: 24px; /* Reduced further from 28px */
+        color: #00b3b3; /* Cyan color */
+        margin: 0;
+        margin-bottom: 5px;
+    }
+
+    .header-subtitle {
+        font-size: 16px; /* Reduced from 18px */
+        color: #666;
+        margin: 0;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px 20px 20px;
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 20px;
+    }
+
+    .input-section {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .results-section {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    select, input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+
+    .range-value {
+        text-align: right;
+        color: #666;
+        font-size: 0.9em;
+    }
+
+    button {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        width: 100%;
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+
+    button:hover {
+        background-color: #45a049;
+    }
+
+    #btnImprimir {
+        background-color: #2196F3;
+    }
+
+    #btnImprimir:hover {
+        background-color: #1976D2;
+    }
+
+    .result-item {
+        margin-bottom: 10px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+    }
+
+    .result-label {
+        font-weight: bold;
+        color: #666;
+    }
+
+    .result-value {
+        float: right;
+        color: #333;
+    }
+
+    #plot {
+        width: 100%;
+        height: 500px;
+        margin-top: 20px;
+    }
+
+    #lcohPlot {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+
+    #sensibilidadePlot {
+        width: 100%;
+        height: 500px;
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+
+    #monteCarloPlot {
+        width: 100%;
+        height: 400px;
+        margin-top: 20px;
+    }
+
+    h1, h2 {
+        color: #333;
+        margin-bottom: 20px;
+        font-size: 18px; /* Add this line to reduce font size */
+        white-space: nowrap; /* Add this to prevent wrapping */
+    }
+
+    .input-section h2 {
+        color: #00b3b3; /* Cyan color */
+        margin-bottom: 20px;
+        font-size: 18px; /* Match existing size */
+        white-space: nowrap; /* Prevent wrapping */
+    }
+
+    .results-section h2,
+    .results-section h3 {
+        color: #DAA520; /* Golden color */
+    }
+
+    .input-wrapper {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 5px;
+    }
+
+    .input-wrapper input[type="number"] {
+        width: 80px;
+        flex-shrink: 0;
+    }
+
+    .input-wrapper input[type="range"] {
+        flex-grow: 1;
+    }
+
+    input[type="number"] {
+        padding: 4px 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .result-item h3 {
+        margin-top: 20px;
+        margin-bottom: 10px;
+        color: #333;
+    }
+
+    @media print {
+        .no-print {
+            display: none;
+        }
+        body {
+            padding: 0;
+            background: white;
+        }
+        .container {
+            display: block;
+        }
+        .input-section, .results-section {
+            box-shadow: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+    }
+
+    .input-section img {
+        width: 90%; /* Reduced from 100% to 90% */
+        margin-bottom: 20px;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+</style>
+</head>
+<body>
+    <div class="header-bar">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxQjzRs2LOkuT-c3kF6lp0Rvz-mkmnXNrZ-g&s" alt="Logo" style="height: 90px;">
+            <div>
+                <h1 class="header-title">Aplicação para simulação de produção de hidrogênio verde e azul</h1>
+                <h2 class="header-subtitle">Programa H2GREEN da Eneva</h2>
+            </div>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/a/ae/Logo-ufpe-2-2.jpg" alt="UFPE Logo" style="height: 90px;">
+        </div>
+    </div>
+    <div class="container">
+        <div class="input-section no-print">
+            <img src="https://eneva.compleo.com.br/LogoCarreiras" alt="Eneva Logo">
+            <h2>Parâmetros do Eletrolisador</h2>
+            <p style="font-size: 14px; color: #666; margin: -15px 0 20px 0;">Modifique os dados do eletrolisador a seguir para obter os resultados da simulação desejados</p>
+            <div class="form-group">
+                <label for="tipoEletrolisador">Tipo de Eletrolisador:</label>
+                <select id="tipoEletrolisador" onchange="calcular()">
+                    <option value="PEM">PEM</option>
+                    <option value="ALCALINO">Alcalino</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="potenciaNominal">Potência Nominal (MW):</label>
+                <div class="input-wrapper">
+                    <input type="range" id="potenciaNominal" min="1" max="200" value="100" 
+                           oninput="updateValueFromSlider(this, 'potenciaNominalNumber'); calcular()">
+                    <input type="number" id="potenciaNominalNumber" min="1" max="200" value="100" 
+                           oninput="updateValueFromNumber(this, 'potenciaNominal'); calcular()">
+                </div>
+                <div id="potenciaNominalValue" class="range-value">100 MW</div>
+            </div>
+            <div class="form-group">
+                <label for="percentualPotencia">Percentual de Potência:</label>
+                <div class="input-wrapper">
+                    <input type="range" id="percentualPotencia" min="0" max="1" value="0.85" step="0.01" 
+                           oninput="updateValueFromSlider(this, 'percentualPotenciaNumber'); calcular()">
+                    <input type="number" id="percentualPotenciaNumber" min="0" max="100" value="85" step="1" 
+                           oninput="updateValueFromNumber(this, 'percentualPotencia', true); calcular()">
+                </div>
+                <div id="percentualPotenciaValue" class="range-value">85%</div>
+            </div>
+            <div class="form-group">
+                <label for="horasPorDia">Horas por Dia:</label>
+                <div class="input-wrapper">
+                    <input type="range" id="horasPorDia" min="0" max="24" value="20" 
+                           oninput="updateValueFromSlider(this, 'horasPorDiaNumber'); calcular()">
+                    <input type="number" id="horasPorDiaNumber" min="0" max="24" value="20" 
+                           oninput="updateValueFromNumber(this, 'horasPorDia'); calcular()">
+                </div>
+                <div id="horasPorDiaValue" class="range-value">20 horas</div>
+            </div>
+            <div class="form-group">
+                <label for="diasPorSemana">Dias por Semana:</label>
+                <div class="input-wrapper">
+                    <input type="range" id="diasPorSemana" min="0" max="7" value="5" 
+                           oninput="updateValueFromSlider(this, 'diasPorSemanaNumber'); calcular()">
+                    <input type="number" id="diasPorSemanaNumber" min="0" max="7" value="5" 
+                           oninput="updateValueFromNumber(this, 'diasPorSemana'); calcular()">
+                </div>
+                <div id="diasPorSemanaValue" class="range-value">5 dias</div>
+            </div>
+
+            <h2>Parâmetros Financeiros</h2>
+            <p style="font-size: 14px; color: #666; margin: -15px 0 20px 0;">Modifique os dados financeiros a seguir para obter os resultados da simulação desejados</p>
+            
+            <div class="form-group">
+                <label for="wacc">Taxa de Juros (WACC):</label>
+                <div class="input-wrapper">
+                    <input type="range" id="wacc" min="0.01" max="0.20" value="0.08" step="0.01"
+                           oninput="updateValueFromSlider(this, 'waccNumber'); calcular()">
+                    <input type="number" id="waccNumber" min="1" max="20" value="8" step="1"
+                           oninput="updateValueFromNumber(this, 'wacc', true); calcular()">
+                </div>
+                <div id="waccValue" class="range-value">8%</div>
+            </div>
+
+            <div class="form-group">
+                <label for="opexAnual">OPEX Anual (% do CAPEX):</label>
+                <div class="input-wrapper">
+                    <input type="range" id="opexAnual" min="0.01" max="0.10" value="0.05" step="0.01"
+                           oninput="updateValueFromSlider(this, 'opexAnualNumber'); calcular()">
+                    <input type="number" id="opexAnualNumber" min="1" max="10" value="5" step="1"
+                           oninput="updateValueFromNumber(this, 'opexAnual', true); calcular()">
+                </div>
+                <div id="opexAnualValue" class="range-value">5%</div>
+            </div>
+
+            <div class="form-group">
+                <label for="capexEletrolisador">CAPEX do Eletrolisador (R$ milhões):</label>
+                <div class="input-wrapper">
+                    <input type="range" id="capexEletrolisador" min="100" max="1000" value="500" step="10"
+                           oninput="updateValueFromSlider(this, 'capexEletrolisadorNumber'); calcular()">
+                    <input type="number" id="capexEletrolisadorNumber" min="100" max="1000" value="500" step="10"
+                           oninput="updateValueFromNumber(this, 'capexEletrolisador'); calcular()">
+                </div>
+                <div id="capexEletrolisadorValue" class="range-value">500 milhões</div>
+            </div>
+
+            <button onclick="calcular()">Calcular</button>
+            <button id="btnImprimir" onclick="gerarRelatorio()">Gerar Relatório para Impressão</button>
+        </div>
+
+        <div class="results-section">
+            <h2>Resultados</h2>
+            <div id="resultados"></div>
+            <div id="plot"></div>
+        </div>
+    </div>
+
+<script>
+let previousResults = null;
+
+function updateValue(slider, outputId) {
+    const output = document.getElementById(outputId);
+    let value = slider.value;
+    switch(outputId) {
+        case 'potenciaNominalValue':
+            output.textContent = value + ' MW';
+            break;
+        case 'percentualPotenciaValue':
+            output.textContent = (value * 100).toFixed(0) + '%';
+            break;
+        case 'horasPorDiaValue':
+            output.textContent = value + ' horas';
+            break;
+        case 'diasPorSemanaValue':
+            output.textContent = value + ' dias';
+            break;
+        case 'waccValue':
+            output.textContent = (value * 100).toFixed(0) + '%';
+            break;
+        case 'opexAnualValue':
+            output.textContent = (value * 100).toFixed(0) + '%';
+            break;
+        case 'capexEletrolisadorValue':
+            output.textContent = value + ' milhões';
+            break;
+    }
+}
+
+function updateValueFromSlider(slider, numberId) {
+    const numberInput = document.getElementById(numberId);
+    if (slider.id === 'percentualPotencia') {
+        numberInput.value = (slider.value * 100).toFixed(0);
+    } else {
+        numberInput.value = slider.value;
+    }
+    updateValue(slider, slider.id + 'Value');
+}
+
+function updateValueFromNumber(numberInput, sliderId, isPercentage = false) {
+    const slider = document.getElementById(sliderId);
+    if (isPercentage) {
+        slider.value = (numberInput.value / 100).toFixed(2);
+    } else {
+        slider.value = numberInput.value;
+    }
+    updateValue(slider, sliderId + 'Value');
+}
+
+function polyfit(x, y, degree) {
+    let X = [];
+    for(let i = 0; i <= degree; i++) {
+        X[i] = [];
+        for(let j = 0; j < x.length; j++) {
+            X[i][j] = Math.pow(x[j], i);
+        }
+    }
+    X = numeric.transpose(X);
+    let solution = numeric.solve(numeric.dot(numeric.transpose(X), X), 
+                               numeric.dot(numeric.transpose(X), y));
+    return solution.reverse();
+}
+
+function polyval(coeffs, x) {
+    return coeffs.reduce((sum, coeff, i) => sum + coeff * Math.pow(x, coeffs.length-1-i), 0);
+}
+
+function calcularProducaoHidrogenio(tipo, potencia, percentual, horas, dias) {
+    let dadosEficiencia;
+    if(tipo.toLowerCase() === 'pem') {
+        dadosEficiencia = [
+            [0.1, 0.74],
+            [0.3, 0.75],
+            [0.7, 0.70],
+            [0.9, 0.63],
+            [1.0, 0.58]
+        ];
+    } else {
+        dadosEficiencia = [
+            [0.2, 0.52],
+            [0.4, 0.578],
+            [0.6, 0.582],
+            [0.8, 0.576],
+            [1.0, 0.568]
+        ];
+    }
+
+    let percentuais = dadosEficiencia.map(p => p[0]);
+    let eficiencias = dadosEficiencia.map(p => p[1]);
+    
+    let coeficientes = polyfit(percentuais, eficiencias, 4);
+    let eficienciaOperacional = polyval(coeficientes, percentual);
+    eficienciaOperacional = Math.max(Math.min(eficienciaOperacional, 1.0), 0.0);
+
+    let horasTotais = horas * dias * 52;
+    let LHV_h2 = 0.033;
+    let massaPorHora = (eficienciaOperacional * potencia * percentual) / LHV_h2;
+    let massaTotal = massaPorHora * horasTotais;
+    let energiaConsumida = potencia * percentual * horasTotais;
+    let aguaConsumida = massaTotal * 9;
+
+    let percentuaisPlot = numeric.linspace(Math.min(...percentuais), Math.max(...percentuais), 100);
+    let eficienciasPlot = percentuaisPlot.map(p => polyval(coeficientes, p));
+
+    return {
+        eficienciaOperacional,
+        horasTotais,
+        massaPorHora,
+        massaTotal,
+        energiaConsumida,
+        aguaConsumida,
+        percentuais,
+        eficiencias,
+        percentuaisPlot,
+        eficienciasPlot
+    };
+}
+
+function calcularLCOH(tipoEletrolisador, potenciaNominal, percentualPotencia, horasPorDia, diasPorSemana, precosEnergia = null, wacc = 0.08, opexAnualPercentual = 0.05, capexEletrolisador = 500_000_000) {
+    const precosEnergiaDefault = Array.from({length: 20}, (_, i) => ({
+        ano: 2025 + i,
+        energia_estimada: 210.555135 * Math.pow(1.068, i)
+    }));
+
+    if (!precosEnergia) {
+        precosEnergia = precosEnergiaDefault;
+    }
+
+    const vidaUtilProjeto = 20; // anos
+    const incrementoAnual = 0.01; // 1%;
+    const anoReferencia = 2025;
+
+    let horasOperacaoAcumulada = 0;
+    let resultadosAnuais = [];
+    let vpTotalCustos = 0;
+    let vpTotalProducao = 0;
+
+    const fatorCapex = (wacc * Math.pow(1 + wacc, vidaUtilProjeto)) / (Math.pow(1 + wacc, vidaUtilProjeto) - 1);
+
+    for (let ano = 0; ano < vidaUtilProjeto; ano++) {
+        const anoCorrente = anoReferencia + ano;
+        const precoEnergiaAno = precosEnergia[ano].energia_estimada;
+
+        const horasOperacaoTotal = horasOperacaoAcumulada;
+        const incrementoTotal = Math.pow(1 + incrementoAnual, horasOperacaoTotal / (24 * 365));
+
+        const resultadosProducao = calcularProducaoHidrogenio(
+            tipoEletrolisador, 
+            potenciaNominal * incrementoTotal,
+            percentualPotencia,
+            horasPorDia,
+            diasPorSemana
+        );
+
+        horasOperacaoAcumulada += resultadosProducao.horasTotais;
+
+        let capexAnualizado = capexEletrolisador * fatorCapex;
+        const opexAnual = capexEletrolisador * opexAnualPercentual;
+        const custoEnergia = resultadosProducao.energiaConsumida * precoEnergiaAno;
+
+        const custoTotal = capexAnualizado + opexAnual + custoEnergia;
+        const vpCustos = custoTotal / Math.pow(1 + wacc, ano);
+        const vpProducaoH2 = resultadosProducao.massaTotal / Math.pow(1 + wacc, ano);
+
+        vpTotalCustos += vpCustos;
+        vpTotalProducao += vpProducaoH2;
+
+        resultadosAnuais.push({
+            ano: anoCorrente,
+            capexAnualizado,
+            opexAnual,
+            custoEnergia,
+            custoTotal,
+            vpCustos,
+            producaoH2: resultadosProducao.massaTotal,
+            vpProducaoH2
+        });
+    }
+
+    const lcoh = vpTotalCustos / vpTotalProducao;
+    return {
+        lcoh,
+        resultadosAnuais
+    };
+}
+
+function plotarGrafico(resultados, tipo, percentualPotencia) {
+    let trace1 = {
+        x: resultados.percentuaisPlot.map(p => p * 100),
+        y: resultados.eficienciasPlot.map(e => e * 100),
+        mode: 'lines',
+        name: 'Curva de Eficiência'
+    };
+
+    let trace2 = {
+        x: resultados.percentuais.map(p => p * 100),
+        y: resultados.eficiencias.map(e => e * 100),
+        mode: 'markers',
+        name: 'Dados Originais',
+        marker: { size: 8 }
+    };
+
+    let trace3 = {
+        x: [percentualPotencia * 100],
+        y: [resultados.eficienciaOperacional * 100],
+        mode: 'markers',
+        name: 'Ponto de Operação',
+        marker: { size: 12, color: 'red' }
+    };
+
+    let layout = {
+        title: `Curva de Eficiência do Eletrolisador ${tipo.toUpperCase()}`,
+        xaxis: { title: 'Percentual da Potência Nominal (%)' },
+        yaxis: { title: 'Eficiência (%)' },
+        template: 'plotly_white'
+    };
+
+    Plotly.newPlot('plot', [trace1, trace2, trace3], layout);
+}
+
+function gerarRelatorio() {
+    window.print();
+}
+
+function calcularSensibilidade() {
+    const precosEnergia = Array.from({length: 20}, (_, i) => ({
+        ano: 2025 + i,
+        energia_estimada: 210.555135 * Math.pow(1.068, i)
+    }));
+
+    const variaveis = {
+        'Preço Energia': {
+            valores: [-0.2, -0.1, 0, 0.1, 0.2],
+            fullName: 'Preço da Energia'
+        },
+        '% Pot. Nominal': {
+            valores: [-0.2, -0.1, 0, 0.1, 0.2],
+            fullName: 'Percentual da Potência Nominal'
+        },
+        'WACC': {
+            valores: [-0.2, -0.1, 0, 0.1, 0.2],
+            fullName: 'Taxa de Juros (WACC)'
+        },
+        'OPEX': {
+            valores: [-0.2, -0.1, 0, 0.1, 0.2],
+            fullName: 'Opex Anual Percentual'
+        }
+    };
+
+    const tipo = document.getElementById('tipoEletrolisador').value;
+    const potencia = parseFloat(document.getElementById('potenciaNominal').value);
+    const percentual = parseFloat(document.getElementById('percentualPotencia').value);
+    const horas = parseFloat(document.getElementById('horasPorDia').value);
+    const dias = parseFloat(document.getElementById('diasPorSemana').value);
+
+    // Calculate base LCOH
+    const wacc = parseFloat(document.getElementById('wacc').value);
+    const lcohBase = calcularLCOH(tipo, potencia, percentual, horas, dias, null, wacc).lcoh;
+
+    // Perform sensitivity analysis
+    const impactoVariaveis = {};
+    
+    for (const [varNome, varInfo] of Object.entries(variaveis)) {
+        const lcohVariacoes = [];
+        
+        for (const percVariacao of varInfo.valores) {
+            let lcoh;
+            
+            switch(varNome) {
+                case 'Preço Energia':
+                    const precosAjustados = precosEnergia.map(p => ({
+                        ...p,
+                        energia_estimada: p.energia_estimada * (1 + percVariacao)
+                    }));
+                    lcoh = calcularLCOH(tipo, potencia, percentual, horas, dias, precosAjustados, wacc).lcoh;
+                    break;
+                    
+                case '% Pot. Nominal':
+                    lcoh = calcularLCOH(tipo, potencia, percentual * (1 + percVariacao), horas, dias, null, wacc).lcoh;
+                    break;
+                    
+                case 'WACC':
+                    lcoh = calcularLCOH(tipo, potencia, percentual, horas, dias, null, wacc * (1 + percVariacao)).lcoh;
+                    break;
+                    
+                case 'OPEX':
+                    lcoh = calcularLCOH(tipo, potencia, percentual, horas, dias, null, null, opexAnual * (1 + percVariacao)).lcoh;
+                    break;
+            }
+            
+            lcohVariacoes.push(lcoh);
+        }
+        
+        impactoVariaveis[varNome] = {
+            impactoMax: Math.max(...lcohVariacoes) - lcohBase,
+            impactoMin: Math.min(...lcohVariacoes) - lcohBase,
+            lcohVariacoes,
+            percVariacoes: varInfo.valores
+        };
+    }
+
+    // Create tornado plot
+    const tornadoData = [
+        {
+            type: 'bar',
+            orientation: 'h',
+            name: 'Impacto Máximo',
+            y: Object.keys(impactoVariaveis),
+            x: Object.values(impactoVariaveis).map(d => d.impactoMax),
+            marker: {color: 'rgba(55, 128, 191, 0.7)'},
+            hovertemplate: '%{customdata}<br>Impacto: %{x:.2f}<extra></extra>',
+            customdata: Object.entries(variaveis).map(([_, info]) => info.fullName)
+        },
+        {
+            type: 'bar',
+            orientation: 'h',
+            name: 'Impacto Mínimo',
+            y: Object.keys(impactoVariaveis),
+            x: Object.values(impactoVariaveis).map(d => d.impactoMin),
+            marker: {color: 'rgba(219, 64, 82, 0.7)'},
+            hovertemplate: '%{customdata}<br>Impacto: %{x:.2f}<extra></extra>',
+            customdata: Object.entries(variaveis).map(([_, info]) => info.fullName)
+        }
+    ];
+
+    const tornadoLayout = {
+        title: 'Análise de Sensibilidade do LCOH',
+        xaxis: {title: 'Variação no LCOH (R$/kg)'},
+        yaxis: {
+            title: 'Variável',
+            automargin: true,
+            tickfont: {
+                size: 12
+            }
+        },
+        barmode: 'overlay',
+        template: 'plotly_white',
+        margin: {
+            l: 120,  // Reduced left margin
+            r: 50,
+            t: 50,
+            b: 50
+        },
+        height: 500,  // Increased height
+        width: null,  // Allow width to be responsive
+        hoverlabel: {
+            bgcolor: "white",
+            font: { size: 14 }
+        }
+    };
+
+    // Create sensitivity plot div if it doesn't exist
+    if (!document.getElementById('sensibilidadePlot')) {
+        const sensDiv = document.createElement('div');
+        sensDiv.id = 'sensibilidadePlot';
+        document.getElementById('resultados').appendChild(sensDiv);
+    }
+
+    Plotly.newPlot('sensibilidadePlot', tornadoData, tornadoLayout);
+
+    // Add sensitivity analysis results to results section
+    const sensResults = document.createElement('div');
+    sensResults.innerHTML = `
+        <div class="result-item">
+            <span class="result-label">LCOH Base:</span>
+            <span class="result-value">R$ ${lcohBase.toFixed(2)}/kg</span>
+        </div>
+        <h3>Impacto das Variáveis no LCOH:</h3>
+        ${Object.entries(impactoVariaveis).map(([nome, dados]) => `
+            <div class="result-item">
+                <span class="result-label">${nome}:</span>
+                <span class="result-value">
+                    Min: R$ ${dados.impactoMin.toFixed(2)}/kg, 
+                    Max: R$ ${dados.impactoMax.toFixed(2)}/kg
+                </span>
+            </div>
+        `).join('')}
+    `;
+    
+    document.getElementById('resultados').appendChild(sensResults);
+}
+
+// Add Monte Carlo analysis
+async function analiseMonteCarlo() {
+    // Get current input values
+    const tipoEletrolisador = document.getElementById('tipoEletrolisador').value;
+    const potenciaNominal = parseFloat(document.getElementById('potenciaNominal').value);
+    const percentualPotencia = parseFloat(document.getElementById('percentualPotencia').value);
+    const horasPorDia = parseFloat(document.getElementById('horasPorDia').value);
+    const diasPorSemana = parseFloat(document.getElementById('diasPorSemana').value);
+
+    // Base parameters
+    const anoReferencia = 2025;
+    const vidaUtilProjeto = 20;
+    const capexEletrolisadorBase = 500_000_000;
+    const opexAnualPercentualBase = 0.05;
+    const waccBase = 0.08;
+    const incrementoAnual = 0.01;
+    const incentivoGovernoPercentual = 0.1;
+
+    // Create base energy data
+    const energyYears = Array.from({length: 20}, (_, i) => 2025 + i);
+    const energyPrices = energyYears.map((_, i) => 210.555135 * Math.pow(1.068, i));
+    const precosEnergiaBase = energyYears.map((year, i) => ({
+        ano: year,
+        energia_estimada: energyPrices[i]
+    }));
+
+    // Monte Carlo parameters
+    const numSimulacoes = 2000;
+    const lcohList = [];
+
+    // Run simulations
+    for(let i = 0; i < numSimulacoes; i++) {
+        // Generate random variations
+        const precosEnergiaRandom = precosEnergiaBase.map(p => ({
+            ...p,
+            energia_estimada: p.energia_estimada * (1 + (0.1 * (2 * Math.random() - 1)))
+        }));
+
+        const percentualPotenciaRandom = Math.max(0, Math.min(1, 
+            percentualPotencia * (1 + (0.1 * (2 * Math.random() - 1)))));
+            
+        const waccRandom = Math.max(0, 
+            waccBase * (1 + (0.1 * (2 * Math.random() - 1))));
+            
+        const opexRandom = Math.max(0, 
+            opexAnualPercentualBase * (1 + (0.1 * (2 * Math.random() - 1))));
+
+        // Calculate LCOH for this simulation
+        const lcoh = calcularLCOH(
+            tipoEletrolisador,
+            potenciaNominal,
+            percentualPotenciaRandom,
+            horasPorDia,
+            diasPorSemana,
+            precosEnergiaRandom,
+            waccRandom,
+            opexRandom
+        ).lcoh;
+
+        lcohList.push(lcoh);
+    }
+
+    // Create histogram data
+    const trace = {
+        x: lcohList,
+        type: 'histogram',
+        nbinsx: 50,
+        marker: {
+            color: 'rgb(158,202,225)',
+            opacity: 0.7
+        }
+    };
+
+    const layout = {
+        title: 'Distribuição do LCOH - Simulação de Monte Carlo',
+        xaxis: {title: 'LCOH (R$/kg)'},
+        yaxis: {title: 'Frequência'},
+        template: 'plotly_white'
+    };
+
+    // Create Monte Carlo plot div if it doesn't exist
+    if (!document.getElementById('monteCarloPlot')) {
+        const mcDiv = document.createElement('div');
+        mcDiv.id = 'monteCarloPlot';
+        mcDiv.style.width = '100%';
+        mcDiv.style.height = '400px';
+        document.getElementById('resultados').appendChild(mcDiv);
+    }
+
+    Plotly.newPlot('monteCarloPlot', [trace], layout);
+
+    // Add Monte Carlo statistics to results
+    const mean = lcohList.reduce((a, b) => a + b) / lcohList.length;
+    const sorted = lcohList.sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)];
+    const p95 = sorted[Math.floor(sorted.length * 0.95)];
+    const p05 = sorted[Math.floor(sorted.length * 0.05)];
+
+    const statsDiv = document.createElement('div');
+    statsDiv.innerHTML = `
+        <div class="result-item">
+            <h3>Estatísticas da Simulação de Monte Carlo</h3>
+            <div><span class="result-label">LCOH Médio:</span> <span class="result-value">R$ ${mean.toFixed(2)}/kg</span></div>
+            <div><span class="result-label">LCOH Mediano:</span> <span class="result-value">R$ ${median.toFixed(2)}/kg</span></div>
+            <div><span class="result-label">LCOH P05:</span> <span class="result-value">R$ ${p05.toFixed(2)}/kg</span></div>
+            <div><span class="result-label">LCOH P95:</span> <span class="result-value">R$ ${p95.toFixed(2)}/kg</span></div>
+        </div>
+    `;
+    // Add the statistics div right after the Monte Carlo plot
+    document.getElementById('monteCarloPlot').after(statsDiv);
+}
+
+// Update calcular() function to remove the incentivoGoverno parameter
+function calcular() {
+    let tipo = document.getElementById('tipoEletrolisador').value;
+    let potencia = parseFloat(document.getElementById('potenciaNominal').value);
+    let percentual = parseFloat(document.getElementById('percentualPotencia').value);
+    let horas = parseFloat(document.getElementById('horasPorDia').value);
+    let dias = parseFloat(document.getElementById('diasPorSemana').value);
+
+    // Get additional input values
+    const wacc = parseFloat(document.getElementById('wacc').value);
+    const opexAnualPercentual = parseFloat(document.getElementById('opexAnual').value);
+    const capexEletrolisador = parseFloat(document.getElementById('capexEletrolisador').value) * 1000000; // Convert to full value
+
+    let resultados = calcularProducaoHidrogenio(tipo, potencia, percentual, horas, dias);
+    
+    // Compare with previous results and highlight changes
+    const getValueColor = (currentValue, previousValue) => {
+        if (!previousValue) return 'inherit';
+        return Math.abs(currentValue - previousValue) > 0.01 ? '#2196F3' : 'inherit';
+    };
+
+    document.getElementById('resultados').innerHTML = `
+        <div class="result-item">
+            <span class="result-label">Eficiência Operacional:</span>
+            <span class="result-value" style="color: ${getValueColor(resultados.eficienciaOperacional, previousResults?.eficienciaOperacional)}">${(resultados.eficienciaOperacional * 100).toFixed(2)}%</span>
+        </div>
+        <div class="result-item">
+            <span class="result-label">Horas Totais de Operação no Ano:</span>
+            <span class="result-value" style="color: ${getValueColor(resultados.horasTotais, previousResults?.horasTotais)}">${resultados.horasTotais.toFixed(0)} horas</span>
+        </div>
+        <div class="result-item">
+            <span class="result-label">Massa de H2 Produzida por Hora:</span>
+            <span class="result-value" style="color: ${getValueColor(resultados.massaPorHora, previousResults?.massaPorHora)}">${resultados.massaPorHora.toFixed(2)} kg/h</span>
+        </div>
+        <div class="result-item">
+            <span class="result-label">Massa Total de H2 Produzida no Ano:</span>
+            <span class="result-value" style="color: ${getValueColor(resultados.massaTotal, previousResults?.massaTotal)}">${resultados.massaTotal.toFixed(2)} kg</span>
+        </div>
+        <div class="result-item">
+            <span class="result-label">Energia Consumida no Ano:</span>
+            <span class="result-value" style="color: ${getValueColor(resultados.energiaConsumida, previousResults?.energiaConsumida)}">${resultados.energiaConsumida.toFixed(2)} MWh</span>
+        </div>
+        <div class="result-item">
+            <span class="result-label">Água Consumida no Ano:</span>
+            <span class="result-value" style="color: ${getValueColor(resultados.aguaConsumida, previousResults?.aguaConsumida)}">${resultados.aguaConsumida.toFixed(2)} kg</span>
+        </div>
+    `;
+
+    const lcohResultados = calcularLCOH(
+        tipo,
+        potencia,
+        percentual,
+        horas,
+        dias,
+        null, // precosEnergia parameter
+        wacc,
+        opexAnualPercentual,
+        capexEletrolisador
+    );
+
+    document.getElementById('resultados').innerHTML += `
+        <div class="result-item">
+            <span class="result-label">LCOH (Custo Nivelado de Hidrogênio):</span>
+            <span class="result-value" style="color: ${getValueColor(lcohResultados.lcoh, previousResults?.lcoh)}">R$ ${lcohResultados.lcoh.toFixed(2)}/kg H₂</span>
+        </div>
+    `;
+
+    // Store current results for next comparison
+    previousResults = {
+        ...resultados,
+        lcoh: lcohResultados.lcoh
+    };
+
+    const anos = lcohResultados.resultadosAnuais.map(r => r.ano);
+    const custosAnuais = lcohResultados.resultadosAnuais.map(r => r.custoTotal / 1e6); // Convert to millions
+
+    const lcohTrace = {
+        x: anos,
+        y: custosAnuais,
+        type: 'bar',
+        name: 'Custos Anuais (Milhões R$)',
+        marker: {
+            color: 'rgb(158,202,225)'
+        }
+    };
+
+    const lcohLayout = {
+        title: 'Custos Anuais do Projeto',
+        xaxis: { title: 'Ano' },
+        yaxis: { title: 'Milhões R$' },
+        template: 'plotly_white'
+    };
+
+    // Check if lcohPlot exists, if not create it
+    if (!document.getElementById('lcohPlot')) {
+        const lcohPlotDiv = document.createElement('div');
+        lcohPlotDiv.id = 'lcohPlot';
+        lcohPlotDiv.style.width = '100%';
+        lcohPlotDiv.style.height = '400px';
+        document.getElementById('plot').parentNode.insertBefore(lcohPlotDiv, document.getElementById('plot').nextSibling);
+    }
+
+    // Update or create the plot
+    Plotly.newPlot('lcohPlot', [lcohTrace], lcohLayout);
+
+    plotarGrafico(resultados, tipo, percentual);
+
+    // Add sensitivity analysis
+    calcularSensibilidade();
+
+    // Add Monte Carlo analysis
+    analiseMonteCarlo();
+}
+
+// Calcular inicialmente com os valores padrão
+calcular();
+</script>
+</body>
+</html>
